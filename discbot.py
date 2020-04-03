@@ -1,4 +1,4 @@
-#bot.py
+#!/usr/bin/env python3
 import sys
 import os
 import random
@@ -51,7 +51,9 @@ for (kw,comm) in commander.items():
 
 @bot.event
 async def on_ready():
-    print(f'{bot.user.name} has connected to Discord!')
+    #print(f'{bot.user.name} has connected to Discord!')
+    pass
+
 
 bot.run(TOKEN)
 
