@@ -1,5 +1,6 @@
 from plugins import PluginResponse, Plugin
 import sys
+import traceback
 
 from random import randint
 
@@ -86,5 +87,5 @@ class lunch(Plugin):
                         return "Added {}".format(name)
                 except:
                         e = sys.exc_info()[0]
-                        return "DBI {}".format(e)
+                        return "DBI {}".format(traceback.print_exc())
 

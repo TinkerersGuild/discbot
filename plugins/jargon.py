@@ -26,7 +26,6 @@ class jargon(Plugin):
                     for i in j_entry.split():
                         if i.lower() in self.jargonlower:
                             self.jargonlower[i.lower()].append(j_entry)
-                            print("updating {} as {}".format(i.lower(),self.jargonlower[i.lower()]))
                         else:
                             self.jargonlower[i.lower()] = [j_entry,]
         self.jarlength = len(self.jargonindex)
@@ -40,7 +39,6 @@ class jargon(Plugin):
         results = list()
         for mystr in searchstr.split():
             resp = self.jargonlower.get(mystr.lower(), "")
-            print(resp)
             if resp != "":
                 for alt in resp:
                     results.append(self.build_url(alt))
@@ -52,20 +50,16 @@ class jargon(Plugin):
 
     def command(self, args):
         text = args.text
-        print(text)
         self.response.setText("Nope")
         searchstr = self.jargonindex[ random.randint(0,self.jarlength)] 
 
 
         if (text != ''):
             searchstr = text
-            print("Gotcha!" + searchstr)
 
         url = self.build_url(searchstr)
-        #print(url)
         resp = requests.get(url)
         if (resp.status_code == 200):
-          #print(resp)
             txt = html2text.html2text(resp.text).split("\n")
             ftxt = ''
 
@@ -76,7 +70,6 @@ class jargon(Plugin):
                 txt[-1] += "\n(more ...)\n "
 
             for i in (txt):
-                print(".{}.".format(i))
                 if (i.strip() != ''):
                     ftxt += i.strip() + "\n"
 
