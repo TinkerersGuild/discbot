@@ -13,54 +13,88 @@ MAXLINES = 12
 HELP = """Usage: !jargon <term>. Goes and looks up the internet Jargon File for a definition of <term>"""
 
 class jargon(Plugin):
-        def __init__(self, dbconn):
-                self.keyword = ("jargon",)
-                self.response = PluginResponse()
-                self.jargonindex = list()
-                with open(storefile) as f:
-                    for line in f:
-                        if not (line.rstrip() == '' ):
-                            self.jargonindex.append(line.rstrip())
-                #print(self.jargonindex)    
-                self.jarlength = len(self.jargonindex)
+    def __init__(self, dbconn):
+        self.keyword = ("jargon",)
+        self.response = PluginResponse()
+        self.jargonindex = list()
+        self.jargonlower = dict()
+        with open(storefile) as f:
+            for line in f:
+                j_entry = line.rstrip()
+                if not (j_entry == '' ):
+                    self.jargonindex.append(j_entry)
+                    for i in j_entry.split():
+                        if i.lower() in self.jargonlower:
+                            self.jargonlower[i.lower()].append(j_entry)
+                            print("updating {} as {}".format(i.lower(),self.jargonlower[i.lower()]))
+                        else:
+                            self.jargonlower[i.lower()] = [j_entry,]
+        self.jarlength = len(self.jargonindex)
 
-        def command(self, args):
-          text = args.text
-          print(text)
-          self.response.setText("Nope")
-          searchstr = self.jargonindex[ random.randint(0,self.jarlength)] 
+    def build_url(self, searchstr):
+        searchstr = "-".join(searchstr.split())
+        cap = searchstr[0]
+        return "http://www.catb.org/jargon/html/{}/{}.html".format(cap.upper(), searchstr)
+
+    def build_alt_list(self, searchstr):
+        results = list()
+        for mystr in searchstr.split():
+            resp = self.jargonlower.get(mystr.lower(), "")
+            print(resp)
+            if resp != "":
+                for alt in resp:
+                    results.append(self.build_url(alt))
+        return results
 
 
-          if (text != ''):
-                  searchstr = text
-                  print("Gotcha!" + searchstr)
-                
-          searchstr = "-".join(searchstr.split())
-          cap = searchstr[0].upper()
-          url = "http://www.catb.org/jargon/html/{}/{}.html".format(cap, searchstr)
-          #print(url)
-          resp = requests.get(url)
-          if (resp.status_code == 200):
+
+
+
+    def command(self, args):
+        text = args.text
+        print(text)
+        self.response.setText("Nope")
+        searchstr = self.jargonindex[ random.randint(0,self.jarlength)] 
+
+
+        if (text != ''):
+            searchstr = text
+            print("Gotcha!" + searchstr)
+
+        url = self.build_url(searchstr)
+        #print(url)
+        resp = requests.get(url)
+        if (resp.status_code == 200):
           #print(resp)
-                  txt = html2text.html2text(resp.text).split("\n")
-                  ftxt = ''
+            txt = html2text.html2text(resp.text).split("\n")
+            ftxt = ''
 
-                  txt = txt[6:-6]
-                  if (len(txt) > MAXLINES):
-                          txt = txt[:MAXLINES]
-                        
-                          txt[-1] += "\n(more ...)\n "
-                
-                  for i in (txt):
-                          print(".{}.".format(i))
-                          if (i.strip() != ''):
-                                  ftxt += i.strip() + "\n"
-                                
+            txt = txt[6:-6]
+            if (len(txt) > MAXLINES):
+                txt = txt[:MAXLINES]
 
-                  ftxt += ("\n" + url)
-                  self.response.setText(ftxt)
-                                
-          else:
+                txt[-1] += "\n(more ...)\n "
 
-                  self.response.setText("I couldn't find that url! {} ".format(url))
-          return self.response
+            for i in (txt):
+                print(".{}.".format(i))
+                if (i.strip() != ''):
+                    ftxt += i.strip() + "\n"
+
+            ftxt += ("\n" + url)
+            self.response.setText(ftxt)
+
+        elif (resp.status_code == 404) :
+            alt_list = self.build_alt_list(text)
+            resp = " No entry for {0} ".format(url)
+            if len(alt_list) > 0:
+                for alt in alt_list:
+                    resp += "\n Did you mean {} ?".format(alt)
+                    
+                    
+            self.response.setText(resp)
+
+
+        else:
+
+            self.response.setText("I couldn't find that url! {0} ({1}) ".format(url, resp.status_code))
+        return self.response
