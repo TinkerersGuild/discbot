@@ -10,9 +10,9 @@ import random
 storefile = "go01.html"
 
 MAXLINES = 12
-HELP = """Usage: !jargon <term>. Goes and looks up the internet Jargon File for a definition of <term>"""
 
 class jargon(Plugin):
+    myhelp = """Usage: !jargon <term>. Goes and looks up the internet Jargon File for a definition of <term>"""
     def __init__(self, dbconn):
         self.keyword = ("jargon",)
         self.response = PluginResponse()
